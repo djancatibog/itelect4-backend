@@ -59,3 +59,16 @@ export type NewItemBody = Pick<Item, "description" | "location" | "type">;
 
 // The body a client may send to change an item.
 export type UpdateItemBody = Partial<Pick<Item, "description" | "location" | "type" | "status">>;
+
+// Reference data for the dropdown. Nobody creates a course through the API,
+// so there is no POST route -- just the list and one lookup.
+export interface Course {
+  code: string;
+  title: string;
+  units: number;
+  semester: string;
+}
+
+// Pick builds a mapped type, which the toJSON transform below accepts.
+// An interface would be refused there.
+export type CourseDoc = Pick<Course, "code" | "title" | "units" | "semester">;

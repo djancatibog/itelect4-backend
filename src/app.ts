@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express, {
   type Request,
   type Response,
@@ -5,17 +6,35 @@ import express, {
 } from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import { connectDB } from "./config/db";
 // Stage 6: uncomment these two lines once the route files have code in them.
     import { authRouter } from "./routes/auth";
     import { itemRouter } from "./routes/items";
+    import { courseRouter } from "./routes/courses";
 
 // This file builds the app and stops. It never opens a port and never
 // touches the database.
 export const app = express();
 
-// Lets a browser on another port (your Vite app on 5173) call this one.
-// Postman is not a browser, so it never needs this.
-app.use(cors());
+// ===== SESSION 10: only the origins this app is actually served from ====
+// One environment variable, comma-separated, so the list is different
+// on your laptop and on Vercel without the code knowing which it is.
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter((origin) => origin !== "");
+
+app.use(cors({ origin: ALLOWED_ORIGINS }));
+
+// On a laptop, server.ts connects to MongoDB and only then starts
+// listening, so a request cannot arrive before the connection exists.
+// Deployed there is no server.ts step -- the app IS the function, and
+// a request is the first thing that happens. So the waiting moves
+// here, in front of every route.
+app.use(async (_req: Request, _res: Response, next: NextFunction) => {
+  await connectDB();
+  next();
+});
 
 // Reads a JSON request body and puts it on req.body. Without this
 // line req.body is undefined.
@@ -27,6 +46,7 @@ app.get("/api/health", (_req: Request, res: Response) => {
 
 // Stage 6: uncomment these two lines.
     app.use("/api/auth", authRouter);
+    app.use("/api/courses", courseRouter);
     app.use("/api/items", itemRouter);
 
 // Nothing above matched, so the URL does not exist.
@@ -60,3 +80,9 @@ app.use(
     res.status(500).json({ message: "Something went wrong" });
   },
 );
+
+// Vercel looks for an Express app in six places, and src/app.ts is one
+// of them. What it needs there is a default export -- that is the
+// whole of the deployment configuration for this project, and it is
+// why there is no vercel.json in this repo.
+export default app;
