@@ -11,6 +11,7 @@ import { connectDB } from "./config/db";
     import { authRouter } from "./routes/auth";
     import { itemRouter } from "./routes/items";
     import { courseRouter } from "./routes/courses";
+    import { aiRouter } from "./routes/ai";
 
 // This file builds the app and stops. It never opens a port and never
 // touches the database.
@@ -48,7 +49,8 @@ app.get("/api/health", (_req: Request, res: Response) => {
     app.use("/api/auth", authRouter);
     app.use("/api/courses", courseRouter);
     app.use("/api/items", itemRouter);
-
+    app.use("/api/ai", aiRouter);
+    
 // Nothing above matched, so the URL does not exist.
 app.use((req: Request, res: Response) => {
   res.status(404).json({
